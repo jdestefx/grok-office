@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self'; script-src 'self'">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Grok Office</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="top">
+    <div class="brand">
+      <p class="eyebrow">Project desk</p>
+      <h1>Grok Office</h1>
+    </div>
+    <p class="tagline">Name a worker, write the job they own, and let them file their notes on their own shelves. The chief can draft the next one with you.</p>
+    <button type="button" id="open-options" class="model-button">
+      <span class="eyebrow">Model</span>
+      <span id="model-label">Grok Build</span>
+    </button>
+  </header>
+
+  <div class="shell">
+    <aside class="roster">
+      <div class="roster-head">
+        <h2>Workers</h2>
+        <button type="button" id="new-worker" class="text-button">New</button>
+      </div>
+      <ul id="worker-list" class="worker-list"></ul>
+      <div class="roster-head group-head">
+        <h2>Groups</h2>
+        <button type="button" id="new-group" class="text-button">New</button>
+      </div>
+      <ul id="group-list" class="group-list"></ul>
+    </aside>
+
+    <main class="desk">
+      <div id="worker-desk">
+      <form id="worker-form" class="worker-form">
+        <div class="form-head">
+          <p id="form-kicker" class="eyebrow">Worker</p>
+          <h2 id="form-title">New worker</h2>
+        </div>
+        <label class="field">
+          <span>Name</span>
+          <input id="worker-name" name="name" maxlength="48" autocomplete="off" placeholder="Researcher" required>
+        </label>
+        <label class="field role-field">
+          <span>Role</span>
+          <textarea id="worker-role" name="role" maxlength="4000" placeholder="You are in charge of … You file your notes by …" required></textarea>
+        </label>
+        <div class="form-actions">
+          <button type="submit" id="save-worker" class="primary">Save worker</button>
+          <button type="button" id="delete-worker" class="danger" hidden>Delete</button>
+          <p id="form-note" class="note"></p>
+        </div>
+      </form>
+
+      <div id="desk-tabs" class="tabs" hidden>
+        <button type="button" id="tab-ledger" data-tab="ledger">Ledger</button>
+        <button type="button" id="tab-talk" data-tab="talk">Talk</button>
+      </div>
+
+      <section id="ledger-panel" class="ledger-panel" hidden>
+        <section id="brief-block" class="brief-block">
+          <div class="brief-head">
+            <div>
+              <p class="eyebrow">Shared</p>
+              <h2>Project brief</h2>
+            </div>
+            <p id="brief-hint" class="note"></p>
+          </div>
+          <textarea id="brief-body" maxlength="20000"></textarea>
+          <div class="form-actions">
+            <button type="button" id="save-brief" class="primary">Save brief</button>
+            <p id="brief-note" class="note"></p>
+          </div>
+        </section>
+
+        <div class="ledger-split">
+          <div class="catalog-wrap">
+            <div class="brief-head">
+              <h2>Catalog</h2>
+              <button type="button" id="new-note" class="text-button">New note</button>
+            </div>
+            <p id="catalog-empty" class="note">No notes yet. Add one on this worker's own shelves.</p>
+            <ul id="catalog" class="catalog"></ul>
+          </div>
+          <form id="note-form" class="note-form">
+            <label class="field">
+              <span>Path</span>
+              <input id="note-path" maxlength="120" autocomplete="off" placeholder="regions/mediterranean.md" required>
+            </label>
+            <label class="field">
+              <span>Open when</span>
+              <input id="note-when" maxlength="240" autocomplete="off" placeholder="the task is about the ancient Mediterranean" required>
+            </label>
+            <label class="field note-body-field">
+              <span>Note</span>
+              <textarea id="note-body" maxlength="20000" placeholder="The lore this shelf holds."></textarea>
+            </label>
+            <div class="form-actions">
+              <button type="submit" class="primary">Save note</button>
+              <button type="button" id="delete-note" class="danger" hidden>Delete note</button>
+              <p id="note-status" class="note"></p>
+            </div>
+          </form>
+        </div>
+      </section>
+
+      <section id="chief-panel" class="chief-panel" hidden>
+        <div class="chief-bar">
+          <h2>Talk to the chief</h2>
+          <button type="button" id="reset-chat" class="text-button">New conversation</button>
+        </div>
+        <div id="transcript" class="transcript" aria-live="polite"></div>
+        <form id="chat-form" class="chat-form">
+          <label class="sr-only" for="chat-input">Message the chief</label>
+          <textarea id="chat-input" rows="3" maxlength="8000" placeholder="We need a worker in charge of reviewing changes before anything merges."></textarea>
+          <div class="chat-actions">
+            <p id="chat-status" class="note">The chief proposes. A worker is added only when you accept.</p>
+            <button type="submit" id="chat-send" class="primary">Ask the chief</button>
+          </div>
+        </form>
+      </section>
+      </div>
+
+      <section id="group-desk" hidden>
+        <form id="group-form" class="worker-form">
+          <div class="form-head">
+            <div>
+              <p class="eyebrow">Working group</p>
+              <h2 id="group-title">New group</h2>
+            </div>
+          </div>
+          <label class="field">
+            <span>Name</span>
+            <input id="group-name" maxlength="48" autocomplete="off" placeholder="History" required>
+          </label>
+          <fieldset class="member-picks" id="member-picks">
+            <legend>Who sits here</legend>
+          </fieldset>
+          <div class="form-actions">
+            <button type="submit" id="save-group" class="primary">Save group</button>
+            <button type="button" id="delete-group" class="danger" hidden>Delete</button>
+            <p id="group-note" class="note"></p>
+          </div>
+        </form>
+
+        <div id="group-visual" class="group-visual" hidden>
+          <div id="member-cards" class="member-cards"></div>
+          <article id="draft-sheet" class="draft-sheet">
+            <p id="draft-empty" class="empty-hint">Send a prompt. Each worker handles their own aspect, then signs the draft.</p>
+            <div id="signature-block"></div>
+            <div id="draft-body" class="draft-body"></div>
+          </article>
+          <div id="remark-list" class="remark-list"></div>
+          <form id="group-prompt" class="chat-form">
+            <label class="sr-only" for="group-prompt-input">Prompt for the group</label>
+            <textarea id="group-prompt-input" rows="3" maxlength="8000" placeholder="Draft the origin of the coastal cities. People, cosmology, and material each take their part."></textarea>
+            <div class="chat-actions">
+              <p id="group-status" class="note">The table stays open until every member has signed the same draft. There is no round limit.</p>
+              <button type="button" id="group-continue" class="ghost" hidden>Continue</button>
+              <button type="submit" id="group-send" class="primary">Send to group</button>
+              <button type="button" id="group-stop" class="danger" hidden>Stop</button>
+            </div>
+          </form>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div id="options-modal" class="modal" hidden>
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="options-title">
+      <div class="form-head">
+        <div>
+          <p class="eyebrow">Options</p>
+          <h2 id="options-title">Where turns run</h2>
+        </div>
+        <button type="button" id="close-options" class="text-button">Close</button>
+      </div>
+      <div class="provider-choices" id="provider-choices">
+        <label class="provider-choice">
+          <input type="radio" name="provider" value="grok">
+          <span>
+            <strong>Grok Build on this PC</strong>
+            <small>Each turn runs grok.exe here, headless.</small>
+          </span>
+        </label>
+        <label class="provider-choice">
+          <input type="radio" name="provider" value="ollama">
+          <span>
+            <strong>Ollama on a Linux server</strong>
+            <small>Each turn is an HTTP call to ollama run gpt-oss:20b on your network.</small>
+          </span>
+        </label>
+      </div>
+      <div id="ollama-fields" class="ollama-fields" hidden>
+        <label class="field">
+          <span>Server</span>
+          <input id="ollama-host" autocomplete="off" placeholder="192.168.1.20" spellcheck="false">
+        </label>
+        <label class="field">
+          <span>Model</span>
+          <input id="ollama-model" autocomplete="off" placeholder="gpt-oss:20b" spellcheck="false">
+        </label>
+        <p class="note">The office calls port 11434. On the Linux machine, Ollama has to listen on the network, not only on localhost.</p>
+      </div>
+      <div class="form-actions">
+        <button type="button" id="save-options" class="primary">Save</button>
+        <button type="button" id="test-ollama" class="ghost" hidden>Test connection</button>
+        <p id="options-note" class="note"></p>
+      </div>
+    </div>
+  </div>
+
+  <script src="renderer.js"></script>
+</body>
+</html>

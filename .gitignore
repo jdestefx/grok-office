@@ -1,0 +1,5 @@
+# Office state: workers, ledgers, chats, and the model host.
+data/
+
+*.tmp
+*.bad
