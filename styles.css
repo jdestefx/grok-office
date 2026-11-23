@@ -49,20 +49,20 @@ button { cursor: pointer; }
 
 .top {
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   justify-content: space-between;
-  gap: 24px;
-  padding: 22px 28px 18px;
+  gap: 10px;
+  padding: 6px 12px;
   border-bottom: 1px solid var(--line);
 }
 
 .model-button {
   border: 1px solid var(--line);
   background: var(--panel);
-  border-radius: 12px;
-  padding: 8px 12px;
+  border-radius: 10px;
+  padding: 4px 10px;
   text-align: left;
-  min-width: 180px;
+  min-width: 148px;
 }
 
 .model-button .eyebrow { margin: 0 0 2px; }
@@ -124,37 +124,70 @@ button { cursor: pointer; }
   margin: 0;
 }
 
-.brand h1 { font-size: 32px; line-height: 1; }
+.brand h1 { font-size: 20px; line-height: 1; }
 
 .eyebrow {
-  margin: 0 0 6px;
+  margin: 0 0 2px;
   color: var(--brass);
-  font-size: 11px;
-  letter-spacing: 0.16em;
+  font-size: 10px;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
 }
 
 .tagline {
   flex: 1;
   max-width: 460px;
-  margin: 0 0 2px;
+  margin: 0;
   color: var(--muted);
-  line-height: 1.45;
+  font-size: 13px;
+  line-height: 1.35;
 }
 
 .shell {
   flex: 1;
   min-height: 0;
-  display: grid;
-  grid-template-columns: 280px minmax(0, 1fr);
+  display: flex;
 }
 
 .roster {
-  border-right: 1px solid var(--line);
+  width: 220px;
+  flex: none;
   display: flex;
   flex-direction: column;
   min-height: 0;
   background: rgba(0, 0, 0, 0.15);
+}
+
+.pane-split {
+  width: 7px;
+  flex: none;
+  cursor: col-resize;
+  position: relative;
+  touch-action: none;
+}
+
+.pane-split::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 3px;
+  width: 1px;
+  background: var(--line);
+}
+
+.pane-split:hover::after,
+.pane-split.dragging::after,
+.pane-split:focus-visible::after {
+  left: 2px;
+  width: 3px;
+  background: var(--brass);
+}
+
+body.pane-dragging,
+body.pane-dragging * {
+  cursor: col-resize !important;
+  user-select: none;
 }
 
 .roster-head, .chief-bar, .form-head {
@@ -164,14 +197,16 @@ button { cursor: pointer; }
   gap: 12px;
 }
 
-.roster-head { padding: 18px 16px 10px; }
-.roster-head h2 { font-size: 22px; }
+.roster-head { padding: 8px 8px 2px; }
+.roster-head h2 { font-size: 15px; }
 
 .worker-list {
   list-style: none;
   margin: 0;
-  padding: 0 10px 16px;
+  padding: 0 4px 6px;
   overflow: auto;
+  flex: 1;
+  min-height: 0;
 }
 
 .worker-row {
@@ -179,12 +214,12 @@ button { cursor: pointer; }
   text-align: left;
   border: 1px solid transparent;
   background: transparent;
-  border-radius: 10px;
-  padding: 10px 12px;
-  margin-bottom: 4px;
+  border-radius: 6px;
+  padding: 3px 8px;
+  margin-bottom: 1px;
   display: grid;
   grid-template-columns: 1fr auto;
-  gap: 4px 8px;
+  gap: 0 6px;
 }
 
 .worker-row:hover { background: rgba(244, 239, 230, 0.04); }
@@ -194,12 +229,12 @@ button { cursor: pointer; }
   border-color: rgba(224, 168, 90, 0.35);
 }
 
-.worker-name { font-size: 15px; }
+.worker-name { font-size: 13px; line-height: 1.3; }
 .worker-job {
   grid-column: 1 / -1;
   color: var(--muted);
-  font-size: 12px;
-  line-height: 1.35;
+  font-size: 11px;
+  line-height: 1.25;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -217,53 +252,53 @@ button { cursor: pointer; }
 }
 
 .desk {
+  flex: 1;
   min-height: 0;
   min-width: 0;
   display: flex;
   flex-direction: column;
-  padding: 18px 22px 16px;
-  gap: 14px;
+  padding: 10px 12px;
+  gap: 8px;
 }
 
 .worker-form {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 8px;
   background: var(--panel);
   border: 1px solid var(--line);
-  border-radius: 16px;
-  padding: 16px 16px 14px;
-  box-shadow: var(--shadow);
+  border-radius: 12px;
+  padding: 10px 12px;
 }
 
-.form-head h2 { font-size: 28px; }
+.form-head h2 { font-size: 18px; }
 
-.field { display: flex; flex-direction: column; gap: 6px; }
+.field { display: flex; flex-direction: column; gap: 3px; }
 .field span { color: var(--muted); font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; }
 
 input, textarea {
   width: 100%;
   background: var(--bg);
   border: 1px solid var(--line);
-  border-radius: 10px;
-  padding: 10px 12px;
+  border-radius: 8px;
+  padding: 6px 8px;
   outline: none;
   resize: vertical;
 }
 
-textarea { min-height: 96px; line-height: 1.45; }
+textarea { min-height: 72px; line-height: 1.4; }
 input:focus, textarea:focus { border-color: rgba(224, 168, 90, 0.7); }
 
 .form-actions, .chat-actions {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
 }
 
 .primary, .danger, .ghost {
   border: 0;
   border-radius: 999px;
-  padding: 8px 14px;
+  padding: 5px 12px;
 }
 
 .primary { background: var(--brass); color: var(--brass-ink); }
@@ -294,7 +329,7 @@ input:focus, textarea:focus { border-color: rgba(224, 168, 90, 0.7); }
   min-height: 0;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 6px;
 }
 
 .chief-panel[hidden] { display: none; }
@@ -306,7 +341,7 @@ input:focus, textarea:focus { border-color: rgba(224, 168, 90, 0.7); }
   padding-right: 4px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 6px;
 }
 
 .empty-hint {
@@ -318,9 +353,9 @@ input:focus, textarea:focus { border-color: rgba(224, 168, 90, 0.7); }
 
 .bubble {
   max-width: 680px;
-  border-radius: 14px;
-  padding: 10px 12px;
-  line-height: 1.45;
+  border-radius: 10px;
+  padding: 6px 10px;
+  line-height: 1.4;
   white-space: pre-wrap;
 }
 
@@ -367,14 +402,14 @@ input:focus, textarea:focus { border-color: rgba(224, 168, 90, 0.7); }
 .proposal p { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.4; }
 .proposal .row { display: flex; justify-content: flex-end; margin-top: 8px; }
 
-.chat-form textarea { min-height: 72px; }
+.chat-form textarea { min-height: 52px; }
 
 .chat-actions { justify-content: space-between; }
 .chat-actions .note { flex: 1; }
 
 body.has-worker .role-field textarea {
-  min-height: 64px;
-  max-height: 92px;
+  min-height: 48px;
+  max-height: 72px;
 }
 
 .tabs {
@@ -387,7 +422,7 @@ body.has-worker .role-field textarea {
   background: transparent;
   color: var(--muted);
   border-radius: 999px;
-  padding: 6px 12px;
+  padding: 3px 10px;
 }
 
 .tabs button[aria-pressed="true"] {
@@ -403,7 +438,7 @@ body.has-worker .role-field textarea {
   min-height: 0;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 8px;
 }
 
 .ledger-panel[hidden] { display: none; }
@@ -411,22 +446,22 @@ body.has-worker .role-field textarea {
 .brief-block, .note-form, .catalog-wrap {
   background: var(--panel);
   border: 1px solid var(--line);
-  border-radius: 16px;
-  padding: 12px;
+  border-radius: 12px;
+  padding: 8px 10px;
 }
 
 .brief-head {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 8px;
+  gap: 8px;
+  margin-bottom: 6px;
 }
 
 .brief-head h2 {
   margin: 0;
   font-family: "Palatino Linotype", Palatino, Georgia, serif;
-  font-size: 22px;
+  font-size: 18px;
   font-weight: 500;
 }
 
@@ -441,8 +476,8 @@ body.has-worker .role-field textarea {
   flex: 1;
   min-height: 0;
   display: grid;
-  grid-template-columns: 240px minmax(0, 1fr);
-  gap: 12px;
+  grid-template-columns: 200px minmax(0, 1fr);
+  gap: 8px;
 }
 
 .catalog-wrap, .note-form {
@@ -463,9 +498,9 @@ body.has-worker .role-field textarea {
   text-align: left;
   border: 1px solid transparent;
   background: transparent;
-  border-radius: 10px;
-  padding: 8px;
-  margin-bottom: 4px;
+  border-radius: 6px;
+  padding: 3px 6px;
+  margin-bottom: 1px;
 }
 
 .catalog button:hover { background: rgba(244, 239, 230, 0.04); }
@@ -487,7 +522,7 @@ body.has-worker .role-field textarea {
   line-height: 1.35;
 }
 
-.note-form { gap: 10px; }
+.note-form { gap: 6px; }
 .note-body-field { flex: 1; min-height: 0; display: flex; flex-direction: column; }
 .note-body-field textarea { flex: 1; min-height: 120px; }
 
@@ -497,7 +532,7 @@ body.has-worker .role-field textarea {
   min-height: 0;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 8px;
 }
 
 #worker-desk[hidden],
@@ -508,9 +543,9 @@ body.has-worker .role-field textarea {
 .group-list {
   list-style: none;
   margin: 0;
-  padding: 0 10px 16px;
+  padding: 0 4px 8px;
   overflow: auto;
-  max-height: 34%;
+  max-height: 38%;
 }
 
 .group-row {
@@ -518,9 +553,9 @@ body.has-worker .role-field textarea {
   text-align: left;
   border: 1px solid transparent;
   background: transparent;
-  border-radius: 10px;
-  padding: 10px 12px;
-  margin-bottom: 4px;
+  border-radius: 6px;
+  padding: 3px 8px;
+  margin-bottom: 1px;
 }
 
 .group-row:hover { background: rgba(244, 239, 230, 0.04); }
@@ -530,18 +565,28 @@ body.has-worker .role-field textarea {
   border-color: rgba(224, 168, 90, 0.35);
 }
 
-.group-row .faces {
+.group-row .faces,
+.group-row .group-focus {
   display: block;
-  margin-top: 3px;
+  margin-top: 1px;
   color: var(--muted);
-  font-size: 12px;
+  font-size: 11px;
+  line-height: 1.25;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.subject-field textarea {
+  min-height: 52px;
+  max-height: 96px;
 }
 
 .member-picks {
   border: 1px solid var(--line);
-  border-radius: 12px;
+  border-radius: 10px;
   margin: 0;
-  padding: 10px 12px 12px;
+  padding: 6px 8px 8px;
 }
 
 .member-picks legend {
@@ -556,7 +601,7 @@ body.has-worker .role-field textarea {
   display: flex;
   gap: 8px;
   align-items: flex-start;
-  padding: 6px 0;
+  padding: 2px 0;
 }
 
 .member-picks input { width: auto; margin-top: 3px; }
@@ -567,12 +612,12 @@ body.has-worker .role-field textarea {
   min-height: 0;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
 }
 
 .member-cards {
   display: flex;
-  gap: 10px;
+  gap: 8px;
 }
 
 .member-card {
@@ -580,8 +625,8 @@ body.has-worker .role-field textarea {
   min-width: 0;
   background: var(--panel);
   border: 1px solid var(--line);
-  border-radius: 14px;
-  padding: 10px 12px;
+  border-radius: 10px;
+  padding: 6px 8px;
   position: relative;
 }
 
@@ -589,9 +634,9 @@ body.has-worker .role-field textarea {
   content: "";
   position: absolute;
   left: 50%;
-  bottom: -10px;
+  bottom: -8px;
   width: 1px;
-  height: 10px;
+  height: 8px;
   background: rgba(224, 168, 90, 0.45);
 }
 
@@ -600,7 +645,7 @@ body.has-worker .role-field textarea {
 
 .member-card .who-name {
   font-family: "Palatino Linotype", Palatino, Georgia, serif;
-  font-size: 18px;
+  font-size: 15px;
 }
 
 .member-card .aspect {
@@ -609,7 +654,7 @@ body.has-worker .role-field textarea {
   font-size: 12px;
   line-height: 1.35;
   display: -webkit-box;
-  -webkit-line-clamp: 3;
+  -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
@@ -630,8 +675,8 @@ body.has-worker .role-field textarea {
   overflow: auto;
   background: #221e18;
   border: 1px solid var(--line);
-  border-radius: 16px;
-  padding: 14px 16px;
+  border-radius: 12px;
+  padding: 8px 10px;
 }
 
 .signature-line {
@@ -645,9 +690,9 @@ body.has-worker .role-field textarea {
 .signature-line.off { color: var(--faint); }
 
 .draft-body {
-  margin-top: 12px;
+  margin-top: 8px;
   white-space: pre-wrap;
-  line-height: 1.5;
+  line-height: 1.45;
 }
 
 .remark-list {

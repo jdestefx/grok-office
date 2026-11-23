@@ -101,10 +101,13 @@ function completeGrok(options) {
     if (typeof options.onStop === "function") options.onStop(handle);
     let stdout = "";
     let stderr = "";
-    const timer = setTimeout(() => {
-      child.kill();
-      reject(new Error("The turn took too long and was stopped."));
-    }, options.timeoutMs || 120000);
+    const timeoutMs = turnTimeout(options.timeoutMs, 120000);
+    const timer = timeoutMs
+      ? setTimeout(() => {
+          child.kill();
+          reject(new Error("The turn took too long and was stopped."));
+        }, timeoutMs)
+      : null;
     child.stdout.setEncoding("utf8");
     child.stderr.setEncoding("utf8");
     child.stdout.on("data", (chunk) => {
@@ -147,10 +150,13 @@ async function completeOllama(options) {
   let timedOut = false;
   const handle = { kill() { controller.abort(); } };
   if (typeof options.onStop === "function") options.onStop(handle);
-  const timer = setTimeout(() => {
-    timedOut = true;
-    controller.abort();
-  }, options.timeoutMs || 180000);
+  const timeoutMs = turnTimeout(options.timeoutMs, 180000);
+  const timer = timeoutMs
+    ? setTimeout(() => {
+        timedOut = true;
+        controller.abort();
+      }, timeoutMs)
+    : null;
   const messages = [{ role: "system", content: options.system }];
   for (const message of options.history || []) {
     if (!message || !message.content) continue;
@@ -188,6 +194,13 @@ async function completeOllama(options) {
   } finally {
     clearTimeout(timer);
   }
+}
+
+function turnTimeout(value, fallback) {
+  if (value === 0 || value === null) return 0;
+  const number = Number(value);
+  if (!Number.isFinite(number) || number <= 0) return fallback;
+  return number;
 }
 
 function extractData(payload) {

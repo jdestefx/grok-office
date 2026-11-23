@@ -3,3 +3,6 @@ data/
 
 *.tmp
 *.bad
+
+# Local launcher. It points at this machine's Electron path.
+Grok Office.lnk

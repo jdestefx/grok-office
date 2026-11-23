@@ -1,18 +1,21 @@
 "use strict";
 
-const { app, BrowserWindow, ipcMain } = require("electron");
+const { app, BrowserWindow, ipcMain, screen } = require("electron");
 const path = require("path");
 const { createStore, newId, MESSAGE_MAX, DEFAULT_CHIEF_ROLE, PREVIOUS_CHIEF_ROLE } = require("./office-store");
 const { askChief, buildPrompt, buildSystemPrompt } = require("./chief-runner");
 const { askMember, buildMemberPrompt, proposedContent } = require("./group-runner");
 const { createLedger } = require("./ledger");
 const { createSettings } = require("./settings-store");
+const { createWindowState } = require("./window-state");
 const { testOllama } = require("./model-client");
 
 const dataDir = path.join(__dirname, "data");
 const store = createStore(dataDir);
 const ledger = createLedger(dataDir);
 const settingsStore = createSettings(dataDir);
+const windowState = createWindowState(dataDir);
+let saveWindowTimer = null;
 let mainWindow = null;
 let chiefChild = null;
 let groupRun = null;
@@ -23,9 +26,10 @@ if (!gotLock) {
 }
 
 function createWindow() {
-  mainWindow = new BrowserWindow({
-    width: 1120,
-    height: 780,
+  const saved = placedOnScreen(windowState.load());
+  const options = {
+    width: saved.width,
+    height: saved.height,
     minWidth: 880,
     minHeight: 620,
     backgroundColor: "#171512",
@@ -37,16 +41,65 @@ function createWindow() {
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: true,
+      zoomFactor: saved.zoomFactor,
     },
-  });
+  };
+  if (saved.x !== null && saved.y !== null) {
+    options.x = saved.x;
+    options.y = saved.y;
+  }
+  mainWindow = new BrowserWindow(options);
 
   mainWindow.once("ready-to-show", () => {
+    if (saved.maximized) mainWindow.maximize();
     mainWindow.show();
+  });
+  mainWindow.on("resize", scheduleWindowSave);
+  mainWindow.on("move", scheduleWindowSave);
+  mainWindow.on("maximize", scheduleWindowSave);
+  mainWindow.on("unmaximize", scheduleWindowSave);
+  mainWindow.webContents.on("zoom-changed", () => {
+    setTimeout(scheduleWindowSave, 50);
+  });
+  mainWindow.on("close", () => {
+    if (saveWindowTimer) clearTimeout(saveWindowTimer);
+    persistWindow();
   });
   mainWindow.on("closed", () => {
     mainWindow = null;
   });
   mainWindow.loadFile(path.join(__dirname, "index.html"));
+}
+
+function scheduleWindowSave() {
+  if (saveWindowTimer) clearTimeout(saveWindowTimer);
+  saveWindowTimer = setTimeout(persistWindow, 200);
+}
+
+function persistWindow() {
+  saveWindowTimer = null;
+  if (!mainWindow || mainWindow.isDestroyed() || mainWindow.isMinimized()) return;
+  const bounds = mainWindow.getNormalBounds();
+  windowState.update({
+    width: bounds.width,
+    height: bounds.height,
+    x: bounds.x,
+    y: bounds.y,
+    maximized: mainWindow.isMaximized(),
+    zoomFactor: mainWindow.webContents.getZoomFactor(),
+  });
+}
+
+function placedOnScreen(saved) {
+  if (saved.x === null || saved.y === null) return saved;
+  const visible = screen.getAllDisplays().some((display) => {
+    const area = display.workArea;
+    const anchorX = saved.x + Math.min(saved.width, 240);
+    const anchorY = saved.y + 32;
+    return anchorX >= area.x && anchorX < area.x + area.width && anchorY >= area.y && anchorY < area.y + area.height;
+  });
+  if (visible) return saved;
+  return Object.assign({}, saved, { x: null, y: null });
 }
 
 app.on("second-instance", () => {
@@ -176,7 +229,7 @@ ipcMain.handle("chief:send", async (_event, text) => {
   });
 
   try {
-    const result = await runChief(message, store.sessionId());
+    const result = await runChief(message);
     if (result.sessionId) store.setSessionId(result.sessionId);
     const proposals = result.workers.map((worker) => ({
       id: newId("p"),
@@ -202,7 +255,7 @@ ipcMain.handle("chief:send", async (_event, text) => {
     if (lostSession && store.sessionId()) {
       store.setSessionId(null);
       try {
-        const result = await runChief(message, null);
+        const result = await runChief(message);
         if (result.sessionId) store.setSessionId(result.sessionId);
         const proposals = result.workers.map((worker) => ({
           id: newId("p"),
@@ -223,6 +276,8 @@ ipcMain.handle("chief:send", async (_event, text) => {
       }
     }
     return recordChiefFailure(error);
+  } finally {
+    chiefChild = null;
   }
 });
 
@@ -292,6 +347,7 @@ async function runTable(groupId) {
         worker,
         members,
         groupName: latest.name,
+        subject: latest.subject,
         catalog: notes.entries,
         brief: notes.brief,
         prompt: latest.table.prompt,
@@ -324,15 +380,15 @@ function chiefHistory() {
     }));
 }
 
-function runChief(message, sessionId) {
+function runChief(message) {
   const settings = settingsStore.load();
   return askChief({
     cwd: __dirname,
     settings,
-    prompt: buildPrompt(store.rosterBrief(), message),
+    prompt: buildPrompt(store.rosterBrief(), message, chiefHistory()),
     systemPrompt: buildSystemPrompt(store.chiefRole()),
-    sessionId: settings.provider === "grok" ? sessionId || "" : "",
-    history: settings.provider === "ollama" ? chiefHistory() : [],
+    sessionId: "",
+    history: [],
     onStop(handle) {
       chiefChild = handle;
     },

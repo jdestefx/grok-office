@@ -6,6 +6,7 @@ const crypto = require("crypto");
 
 const NAME_MAX = 48;
 const ROLE_MAX = 4000;
+const SUBJECT_MAX = 2000;
 const MESSAGE_MAX = 8000;
 
 const PREVIOUS_CHIEF_ROLE = [
@@ -181,7 +182,7 @@ function createStore(dataDir) {
       if (!memberIds.includes(memberId)) memberIds.push(memberId);
     }
     if (memberIds.length < 2) throw new Error("A group needs at least two workers.");
-    if (memberIds.length > 8) throw new Error("Keep a group to eight workers.");
+    const subject = cleanSubject(input && input.subject);
     const id = input && input.id ? String(input.id) : "";
     const duplicate = current.groups.find(
       (group) => group.name.toLowerCase() === name.toLowerCase() && group.id !== id
@@ -194,6 +195,7 @@ function createStore(dataDir) {
         throw new Error("This group is still working. Stop it before changing the table.");
       }
       group.name = name;
+      group.subject = subject;
       group.memberIds = memberIds;
       if (group.table) {
         const approvals = {};
@@ -208,6 +210,7 @@ function createStore(dataDir) {
     const group = {
       id: "g_" + crypto.randomBytes(6).toString("hex"),
       name,
+      subject,
       memberIds,
       createdAt: new Date().toISOString(),
       table: null,
@@ -431,6 +434,7 @@ function normalizeGroup(group, workers) {
   return {
     id,
     name,
+    subject: cleanSubject(group.subject),
     memberIds,
     createdAt: typeof group.createdAt === "string" ? group.createdAt : new Date().toISOString(),
     table: normalizeTable(group.table, memberIds),
@@ -486,6 +490,10 @@ function cleanRole(value) {
   return String(value || "").trim().slice(0, ROLE_MAX);
 }
 
+function cleanSubject(value) {
+  return String(value || "").trim().slice(0, SUBJECT_MAX);
+}
+
 function oneLine(value) {
   return String(value || "").replace(/\s+/g, " ").trim();
 }
@@ -504,8 +512,10 @@ module.exports = {
   MESSAGE_MAX,
   NAME_MAX,
   ROLE_MAX,
+  SUBJECT_MAX,
   createStore,
   cleanName,
   cleanRole,
+  cleanSubject,
   newId,
 };

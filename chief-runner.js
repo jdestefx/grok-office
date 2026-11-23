@@ -32,7 +32,8 @@ const SCHEMA = {
 
 const CONTRACT = [
   "You are speaking inside Grok Office, a desk where the user defines workers.",
-  "The user message lists the workers who already exist.",
+  "The user message lists the workers who already exist, then the conversation so far, then the new message.",
+  "When the user refers to an earlier answer, use that conversation. Do not say it was never said because it is not in the roster or the project brief.",
   "Answer only as the JSON object you were given.",
   "reply is what you say to the user.",
   "workers is a list of new people to hire.",
@@ -46,14 +47,24 @@ const CONTRACT = [
   "Do not use tools. Do not write files. Do not browse.",
 ].join(" ");
 
-function buildPrompt(rosterBrief, userText) {
-  return [
+function buildPrompt(rosterBrief, userText, history) {
+  const lines = [
     "Workers already in the office:",
     rosterBrief || "- (none besides you)",
     "",
-    "The user says:",
-    userText.trim(),
-  ].join("\n");
+  ];
+  const prior = Array.isArray(history) ? history : [];
+  if (prior.length) {
+    lines.push("Conversation so far:");
+    for (const message of prior) {
+      const speaker = message.role === "assistant" ? "Chief" : "User";
+      lines.push(speaker + ": " + String(message.content || "").trim());
+      lines.push("");
+    }
+  }
+  lines.push("The user says:");
+  lines.push(userText.trim());
+  return lines.join("\n");
 }
 
 function buildSystemPrompt(chiefRole) {
@@ -134,7 +145,7 @@ async function askChief(options) {
     sessionId: options.sessionId,
     history: options.history || [],
     cwd: options.cwd,
-    timeoutMs: options.timeoutMs,
+    timeoutMs: 0,
     onStop: options.onStop,
   });
   const data = result.data || {};

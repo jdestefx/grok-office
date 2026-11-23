@@ -57,6 +57,9 @@ function buildMemberPrompt(input) {
     "You are sitting with " + others.map((member) => member.name).join(", ") + " in the group \"" + input.groupName + "\".",
     "The chief is not in this conversation. Work only your own aspect, and leave their aspects intact.",
     "",
+    "Why this group is together, and what the discussion stays on:",
+    String(input.subject || "").trim() || "(No subject written yet. The prompt is the whole focus. Stay inside your own role.)",
+    "",
     "Your catalog. These lines say when a note is worth opening. Do not paste the whole ledger.",
     catalog,
     "",
@@ -81,6 +84,7 @@ function buildMemberPrompt(input) {
 
 const SYSTEM = [
   "You are one member of a working group.",
+  "The group subject says why you are at this table and what the discussion is about. Stay inside it and inside your own role.",
   "Return only the JSON object.",
   "remarks is a short note to the other members.",
   "body is the full proposed content and contains no signature lines.",

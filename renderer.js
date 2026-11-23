@@ -40,6 +40,7 @@ const state = {
   drafts: {},
   deleteArmed: false,
   sending: false,
+  pendingText: "",
   tab: "talk",
   ledger: null,
   ledgerWorkerId: "chief",
@@ -111,12 +112,19 @@ chatForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   const text = chatInput.value.trim();
   if (!text || state.sending) return;
-  const saved = await saveOpenWorker();
-  if (!saved) return;
   state.sending = true;
+  state.pendingText = text;
   chatInput.value = "";
   paintChatStatus("The chief is writing…");
   renderChat();
+  const saved = await saveOpenWorker();
+  if (!saved) {
+    state.sending = false;
+    state.pendingText = "";
+    chatInput.value = text;
+    render();
+    return;
+  }
   try {
     const result = await window.office.askChief(text);
     applyOffice(result.office);
@@ -126,8 +134,9 @@ chatForm.addEventListener("submit", async (event) => {
       paintChatStatus("The chief proposes. A worker is added only when you accept.", "ok");
     }
   } catch (error) {
-    paintChatStatus(error.message, "error");
+    paintChatStatus(plainError(error), "error");
   } finally {
+    state.pendingText = "";
     state.sending = false;
     render();
   }
@@ -255,7 +264,7 @@ document.querySelector("#delete-group").addEventListener("click", async () => {
     state.selectedId = "chief";
     render();
   } catch (error) {
-    paintGroupNote(error.message, "error");
+    paintGroupNote(plainError(error), "error");
   }
 });
 
@@ -298,7 +307,62 @@ window.office.onGroupUpdate((office) => {
   render();
 });
 
+bindPaneSplit();
 boot();
+
+function bindPaneSplit() {
+  const split = document.querySelector("#pane-split");
+  const roster = document.querySelector(".roster");
+  const min = 160;
+  const max = 520;
+  split.setAttribute("aria-valuemin", String(min));
+  split.setAttribute("aria-valuemax", String(max));
+
+  function setWidth(px) {
+    const next = Math.min(max, Math.max(min, Math.round(px)));
+    roster.style.width = next + "px";
+    split.setAttribute("aria-valuenow", String(next));
+    return next;
+  }
+
+  const saved = Number(localStorage.getItem("roster-width"));
+  if (saved >= min && saved <= max) setWidth(saved);
+
+  split.addEventListener("pointerdown", (event) => {
+    if (event.button !== 0) return;
+    event.preventDefault();
+    split.classList.add("dragging");
+    document.body.classList.add("pane-dragging");
+    split.setPointerCapture(event.pointerId);
+    const startX = event.clientX;
+    const startW = roster.getBoundingClientRect().width;
+
+    function move(moveEvent) {
+      setWidth(startW + (moveEvent.clientX - startX));
+    }
+
+    function up() {
+      split.classList.remove("dragging");
+      document.body.classList.remove("pane-dragging");
+      split.removeEventListener("pointermove", move);
+      split.removeEventListener("pointerup", up);
+      split.removeEventListener("pointercancel", up);
+      localStorage.setItem("roster-width", String(Math.round(roster.getBoundingClientRect().width)));
+    }
+
+    split.addEventListener("pointermove", move);
+    split.addEventListener("pointerup", up);
+    split.addEventListener("pointercancel", up);
+  });
+
+  split.addEventListener("keydown", (event) => {
+    if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
+    event.preventDefault();
+    const delta = event.key === "ArrowRight" ? 16 : -16;
+    const next = setWidth(roster.getBoundingClientRect().width + delta);
+    localStorage.setItem("roster-width", String(next));
+  });
+}
 
 async function boot() {
   try {
@@ -501,7 +565,8 @@ function paintNote(text, kind) {
 
 function renderChat() {
   transcript.replaceChildren();
-  if (!state.chat.length && !state.sending) {
+  const showPending = Boolean(state.pendingText);
+  if (!state.chat.length && !showPending && !state.sending) {
     const hint = document.createElement("p");
     hint.className = "empty-hint";
     hint.textContent = "Describe the work this office should cover. The chief will answer and, when you are hiring, draft a name and a role you can add.";
@@ -510,6 +575,9 @@ function renderChat() {
   }
   for (const message of state.chat) {
     transcript.append(renderMessage(message));
+  }
+  if (showPending) {
+    transcript.append(renderMessage({ role: "user", text: state.pendingText }));
   }
   if (state.sending) {
     const pending = document.createElement("article");
@@ -771,6 +839,13 @@ function renderGroupList() {
     const name = document.createElement("span");
     name.className = "worker-name";
     name.textContent = group.name;
+    button.append(name);
+    if (!group.draft && group.subject) {
+      const focus = document.createElement("span");
+      focus.className = "group-focus";
+      focus.textContent = oneLine(group.subject);
+      button.append(focus);
+    }
     const faces = document.createElement("span");
     faces.className = "faces";
     faces.textContent = group.draft
@@ -779,7 +854,7 @@ function renderGroupList() {
           const worker = state.workers.find((item) => item.id === id);
           return worker ? worker.name : "Missing";
         }).join(" · ");
-    button.append(name, faces);
+    button.append(faces);
     button.addEventListener("click", () => selectGroup(group));
     item.append(button);
     list.append(item);
@@ -808,6 +883,7 @@ function renderGroupDesk() {
   const running = Boolean(group && group.table && group.table.status === "running");
   document.querySelector("#save-group").disabled = running;
   document.querySelector("#group-name").readOnly = running;
+  document.querySelector("#group-subject").readOnly = running;
   document.querySelectorAll("#member-picks input").forEach((box) => {
     box.disabled = running;
   });
@@ -834,6 +910,7 @@ function syncGroupForm() {
   state.groupFormToken = token;
   const group = selectedGroup();
   document.querySelector("#group-name").value = group ? group.name : "";
+  document.querySelector("#group-subject").value = group && group.subject ? group.subject : "";
   document.querySelector("#group-title").textContent = group ? group.name : "New group";
   const picks = document.querySelector("#member-picks");
   picks.querySelectorAll("label").forEach((label) => label.remove());
@@ -944,6 +1021,10 @@ function paintGroupStatus(text, kind) {
   else delete note.dataset.lock;
 }
 
+function plainError(error) {
+  return String(error && error.message || "").replace(/^Error invoking remote method '[^']+': Error: /, "");
+}
+
 function paintGroupNote(text, kind) {
   const note = document.querySelector("#group-note");
   note.textContent = text || "";
@@ -957,6 +1038,7 @@ async function saveOpenGroup() {
     const result = await window.office.saveGroup({
       id: state.creatingGroup ? undefined : group && group.id,
       name: document.querySelector("#group-name").value,
+      subject: document.querySelector("#group-subject").value,
       memberIds,
     });
     applyOffice(result.office);
@@ -967,6 +1049,6 @@ async function saveOpenGroup() {
     render();
     paintGroupNote("Saved.", "ok");
   } catch (error) {
-    paintGroupNote(error.message, "error");
+    paintGroupNote(plainError(error), "error");
   }
 }
